@@ -1,31 +1,67 @@
 import { BurgerConstructorUI } from '@ui';
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import type { TConstructorIngredient, TConstructorState, TOrder } from '@utils-types';
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  createOrder,
+  clearOrderModal
+} from '../../services/slices/orderSlice';
+
+import type { TConstructorIngredient } from '@utils-types';
 
 export const BurgerConstructor = (): React.JSX.Element | null => {
-  /** TODO: Взять переменные constructorItems, orderRequest и orderModalData из стора */
-  const constructorItems: TConstructorState = {
-    bun: null,
-    ingredients: [],
-  };
-  const orderRequest = false;
-  const orderModalData: TOrder | null = null;
+  const dispatch = useDispatch();
+
+  const navigate = useNavigate();
+
+const user = useSelector(
+  (state) => state.user.user
+);
+
+  const constructorItems = useSelector(
+    (state) => state.burgerConstructor
+  );
+
+  const orderRequest = useSelector(
+    (state) => state.order.orderRequest
+  );
+
+  const orderModalData = useSelector(
+    (state) => state.order.orderModalData
+  );
 
   const onOrderClick = (): void => {
-    if (!constructorItems.bun || orderRequest) return;
-    // TODO: Оформить заказ
-  };
+  if (!constructorItems.bun || orderRequest) return;
+
+  if (!user) {
+    navigate('/login');
+    return;
+  }
+
+  const ingredientsIds = [
+    constructorItems.bun._id,
+    ...constructorItems.ingredients.map(
+      (ingredient) => ingredient._id
+    ),
+    constructorItems.bun._id
+  ];
+
+  dispatch(createOrder(ingredientsIds));
+};
 
   const closeOrderModal = (): void => {
-    // TODO: Закрыть модальное окно и сбросить заказ
+    dispatch(clearOrderModal());
   };
 
   const price = useMemo(
     () =>
-      (constructorItems.bun ? constructorItems.bun.price * 2 : 0) +
+      (constructorItems.bun
+        ? constructorItems.bun.price * 2
+        : 0) +
       constructorItems.ingredients.reduce(
-        (s: number, v: TConstructorIngredient) => s + v.price,
+        (sum: number, ingredient: TConstructorIngredient) =>
+          sum + ingredient.price,
         0
       ),
     [constructorItems]

@@ -1,41 +1,57 @@
 import { Preloader, OrderInfoUI } from '@ui';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 
 import type { TIngredient } from '@utils-types';
 
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  fetchOrderByNumber,
+  clearOrder
+} from '../../services/slices/orderSlice';
+
 export const OrderInfo = (): React.JSX.Element => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0,
-  };
+  const dispatch = useDispatch();
+  const { number } = useParams();
+   const orderData = useSelector(
+    (state) => state.order.orderData
+  );
 
-  const ingredients: TIngredient[] = [];
+  const ingredients = useSelector(
+    (state) => state.ingredients.ingredients
+  );
 
-  /**
-   * использование useMemo не обязательно
-   */
-  /* Готовим данные для отображения */
+  useEffect(() => {
+    if (number) {
+      dispatch(fetchOrderByNumber(Number(number)));
+    }
+
+    return () => {
+      dispatch(clearOrder());
+    };
+  }, [dispatch, number]);
+
   const orderInfo = useMemo(() => {
     if (!orderData || !ingredients.length) return null;
 
     const date = new Date(orderData.createdAt);
 
-    type TIngredientsWithCount = Record<string, TIngredient & { count: number }>;
+    type TIngredientsWithCount = Record<
+      string,
+      TIngredient & { count: number }
+    >;
 
     const ingredientsInfo = orderData.ingredients.reduce(
       (acc: TIngredientsWithCount, item) => {
         if (!acc[item]) {
-          const ingredient = ingredients.find((ing) => ing._id === item);
+          const ingredient = ingredients.find(
+            (ing) => ing._id === item
+          );
+
           if (ingredient) {
             acc[item] = {
               ...ingredient,
-              count: 1,
+              count: 1
             };
           }
         } else {
@@ -56,7 +72,7 @@ export const OrderInfo = (): React.JSX.Element => {
       ...orderData,
       ingredientsInfo,
       date,
-      total,
+      total
     };
   }, [orderData, ingredients]);
 
