@@ -11,7 +11,7 @@ type ProtectedRouteProps = {
 
 export const ProtectedRoute = ({
   children,
-  onlyUnAuth = false
+  onlyUnAuth = false,
 }: ProtectedRouteProps): React.JSX.Element => {
   const user = useSelector((state) => state.user.user);
   const isAuthChecked = useSelector((state) => state.user.isAuthChecked);
@@ -21,18 +21,15 @@ export const ProtectedRoute = ({
   if (!isAuthChecked) {
     return <Preloader />;
   }
+
   if (onlyUnAuth && user) {
-    return <Navigate to='/' replace />;
+    const from = location.state?.from || { pathname: '/' };
+
+    return <Navigate replace to={from} />;
   }
-  
+
   if (!onlyUnAuth && !user) {
-    return (
-      <Navigate
-        to='/login'
-        state={{ from: location }}
-        replace
-      />
-    );
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

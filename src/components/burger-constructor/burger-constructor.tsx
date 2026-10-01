@@ -1,12 +1,9 @@
 import { BurgerConstructorUI } from '@ui';
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useDispatch, useSelector } from '../../services/store';
-import {
-  createOrder,
-  clearOrderModal
-} from '../../services/slices/orderSlice';
+import { createOrder, clearOrderModal } from '../../services/slices/orderSlice';
 
 import type { TConstructorIngredient } from '@utils-types';
 
@@ -15,40 +12,34 @@ export const BurgerConstructor = (): React.JSX.Element | null => {
 
   const navigate = useNavigate();
 
-const user = useSelector(
-  (state) => state.user.user
-);
+  const location = useLocation();
 
-  const constructorItems = useSelector(
-    (state) => state.burgerConstructor
-  );
+  const user = useSelector((state) => state.user.user);
 
-  const orderRequest = useSelector(
-    (state) => state.order.orderRequest
-  );
+  const constructorItems = useSelector((state) => state.burgerConstructor);
 
-  const orderModalData = useSelector(
-    (state) => state.order.orderModalData
-  );
+  const orderRequest = useSelector((state) => state.order.orderRequest);
+
+  const orderModalData = useSelector((state) => state.order.orderModalData);
 
   const onOrderClick = (): void => {
-  if (!constructorItems.bun || orderRequest) return;
+    if (!constructorItems.bun || orderRequest) return;
 
-  if (!user) {
-    navigate('/login');
-    return;
-  }
+    if (!user) {
+      navigate('/login', {
+        state: { from: location },
+      });
+      return;
+    }
 
-  const ingredientsIds = [
-    constructorItems.bun._id,
-    ...constructorItems.ingredients.map(
-      (ingredient) => ingredient._id
-    ),
-    constructorItems.bun._id
-  ];
+    const ingredientsIds = [
+      constructorItems.bun._id,
+      ...constructorItems.ingredients.map((ingredient) => ingredient._id),
+      constructorItems.bun._id,
+    ];
 
-  dispatch(createOrder(ingredientsIds));
-};
+    dispatch(createOrder(ingredientsIds));
+  };
 
   const closeOrderModal = (): void => {
     dispatch(clearOrderModal());
@@ -56,12 +47,9 @@ const user = useSelector(
 
   const price = useMemo(
     () =>
-      (constructorItems.bun
-        ? constructorItems.bun.price * 2
-        : 0) +
+      (constructorItems.bun ? constructorItems.bun.price * 2 : 0) +
       constructorItems.ingredients.reduce(
-        (sum: number, ingredient: TConstructorIngredient) =>
-          sum + ingredient.price,
+        (sum: number, ingredient: TConstructorIngredient) => sum + ingredient.price,
         0
       ),
     [constructorItems]
